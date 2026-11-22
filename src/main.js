@@ -1,14 +1,19 @@
 import "./style.css";
+import { createPipeline } from "./capture/pipeline.js";
 import { DEFAULTS, breakEven, evaluate } from "./deals/deals.js";
+import { mountFramePanel } from "./ui/framePanel.js";
 
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 const pct = (bps) => `${(bps / 100).toFixed(1)}%`;
+const debug = new URLSearchParams(location.search).get("debug") === "1";
 
 document.querySelector("#app").innerHTML = `
   <header>
     <h1>FM Flipper</h1>
-    <p class="lead">Screen-reading market scanner. Work in progress: the deal calculator works today; screen capture is next.</p>
+    <p class="lead">Screen-reading market scanner. Work in progress: frame capture and the deal calculator work today; reading shop windows is next.</p>
   </header>
+
+  <section class="card" id="frames"></section>
 
   <section class="card">
     <h2>Deal calculator</h2>
@@ -26,7 +31,7 @@ document.querySelector("#app").innerHTML = `
     <ol class="roadmap">
       <li class="done">Repo, tests and auto-deploy</li>
       <li class="done">Deal math</li>
-      <li>Frame source: live screen share and replay of saved screenshots</li>
+      <li class="done">Frame source: live screen share and replay of saved screenshots</li>
       <li>Calibration and region finding</li>
       <li>Text and price reading</li>
       <li>Item matching and price sources</li>
@@ -34,6 +39,11 @@ document.querySelector("#app").innerHTML = `
     </ol>
   </section>
 `;
+
+// Every frame flows through one pipeline. Later phases subscribe with pipeline.onRead(...).
+const pipeline = createPipeline();
+mountFramePanel(document.querySelector("#frames"), { pipeline, debug });
+if (debug) window.pipeline = pipeline; // poke at it from the browser console
 
 const form = document.querySelector("#calc");
 const out = document.querySelector("#result");
