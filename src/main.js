@@ -1,7 +1,10 @@
 import "./style.css";
+import { loadSavedCalibrations, saveCalibrations } from "./calibrate/calibration.js";
+import { createShopLocator } from "./calibrate/locator.js";
 import { createPipeline } from "./capture/pipeline.js";
 import { DEFAULTS, breakEven, evaluate } from "./deals/deals.js";
 import { mountFramePanel } from "./ui/framePanel.js";
+import { mountShopPanel } from "./ui/shopPanel.js";
 
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 const pct = (bps) => `${(bps / 100).toFixed(1)}%`;
@@ -10,10 +13,12 @@ const debug = new URLSearchParams(location.search).get("debug") === "1";
 document.querySelector("#app").innerHTML = `
   <header>
     <h1>FM Flipper</h1>
-    <p class="lead">Screen-reading market scanner. Work in progress: frame capture and the deal calculator work today; reading shop windows is next.</p>
+    <p class="lead">Screen-reading market scanner. Work in progress: capture, shop-window finding and the deal calculator work today; reading prices is next.</p>
   </header>
 
   <section class="card" id="frames"></section>
+
+  <section class="card" id="shop"></section>
 
   <section class="card">
     <h2>Deal calculator</h2>
@@ -32,7 +37,7 @@ document.querySelector("#app").innerHTML = `
       <li class="done">Repo, tests and auto-deploy</li>
       <li class="done">Deal math</li>
       <li class="done">Frame source: live screen share and replay of saved screenshots</li>
-      <li>Calibration and region finding</li>
+      <li class="done">Calibration and region finding</li>
       <li>Text and price reading</li>
       <li>Item matching and price sources</li>
       <li>Session log and ranked deals view</li>
@@ -40,10 +45,21 @@ document.querySelector("#app").innerHTML = `
   </section>
 `;
 
-// Every frame flows through one pipeline. Later phases subscribe with pipeline.onRead(...).
+// Every frame flows through one pipeline. The shop locator looks for a shop window on
+// each read; the price reader (next phase) will subscribe with locator.onResult(...).
+let calibrations = loadSavedCalibrations();
+const store = {
+  get: () => calibrations,
+  set(list) {
+    calibrations = list;
+    return saveCalibrations(list);
+  },
+};
 const pipeline = createPipeline();
-mountFramePanel(document.querySelector("#frames"), { pipeline, debug });
-if (debug) window.pipeline = pipeline; // poke at it from the browser console
+const locator = createShopLocator({ pipeline, getCalibrations: store.get });
+const framePanel = mountFramePanel(document.querySelector("#frames"), { pipeline, debug, onStop: () => locator.reset() });
+mountShopPanel(document.querySelector("#shop"), { pipeline, locator, store, framePanel, debug });
+if (debug) Object.assign(window, { pipeline, locator }); // poke at them from the browser console
 
 const form = document.querySelector("#calc");
 const out = document.querySelector("#result");

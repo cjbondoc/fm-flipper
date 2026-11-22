@@ -104,9 +104,13 @@ export function createPipeline({
       region = next;
       detector.reset();
     },
-    /** Forget the current picture, e.g. when switching sources. */
+    get region() {
+      return region;
+    },
+    /** Forget the current picture and watched region, e.g. when switching sources. */
     reset() {
       clearTimeout(repeatTimer);
+      region = null;
       detector.reset();
       last = null;
       fps = 0;

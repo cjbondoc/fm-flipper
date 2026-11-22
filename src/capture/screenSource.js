@@ -8,6 +8,8 @@
 //                           frame. Browsers may pause this while the page is hidden.
 // Frames are thinned out to `fps` before they reach the pipeline.
 
+import { createRateLimiter } from "./rateLimiter.js";
+
 export const SCREEN_METHODS = Object.freeze({
   "track-processor": "Track processor",
   "video-frame-callback": "Video frame callback",
@@ -32,16 +34,9 @@ export async function startScreenShare({ onImage, onEnded, fps = 10 }) {
     selfBrowserSurface: "exclude",
   });
   const [track] = stream.getVideoTracks();
-  const minGapMs = (1000 / fps) * 0.9; // a little slack so a 30 fps stream gives a steady 10
-  let lastAt = -Infinity;
+  const due = createRateLimiter(fps);
   let stopped = false;
   let cleanup = () => {};
-
-  const due = (now) => {
-    if (now - lastAt < minGapMs) return false;
-    lastAt = now;
-    return true;
-  };
 
   let method;
   if (typeof MediaStreamTrackProcessor === "function") {

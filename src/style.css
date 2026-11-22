@@ -151,3 +151,38 @@ button[hidden], [hidden] { display: none !important; }
 .debug { margin-top: 8px; }
 .thumb { width: 320px; max-width: 100%; image-rendering: pixelated; border: 1px solid var(--line); }
 .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+/* ---- Shop window card ---- */
+
+.pill[data-mode="found"] { color: var(--good); border-color: currentColor; }
+.pill[data-mode="rejected"] { color: var(--warn); border-color: currentColor; }
+.status-line { margin: 12px 0 0; }
+.ok { color: var(--good); font-size: 14px; margin: 12px 0 0; }
+
+.row-chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 10px 0 0; padding: 0; }
+.row-chips li {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.row-chips li.on { color: var(--good); border-color: currentColor; }
+
+.profiles { list-style: none; margin: 12px 0 0; padding: 0; }
+.profiles li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.profiles li span { overflow-wrap: anywhere; }
+
+.editor { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
+.snapshot { display: block; width: 100%; height: auto; margin-top: 10px; cursor: crosshair; touch-action: none; border-radius: 6px; }
+.editor .name { margin-top: 12px; max-width: 320px; }
+.row-chips li.sold { color: var(--warn); border-color: currentColor; }

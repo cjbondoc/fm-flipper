@@ -10,7 +10,12 @@ const PREVIEW_MAX_WIDTH = 1440;
 const LOG_SIZE = 6;
 const REASONS = { settled: "changed and settled", timeout: "kept changing, read anyway", forced: "read on request" };
 
-export function mountFramePanel(root, { pipeline, debug = false }) {
+/**
+ * Returns { addOverlay(fn), redraw() }. Overlays are drawn on the preview after each
+ * frame as fn(ctx, scale), where scale maps frame pixels to preview pixels.
+ * onStop() runs whenever the source stops or changes.
+ */
+export function mountFramePanel(root, { pipeline, debug = false, onStop }) {
   root.innerHTML = `
     <div class="card-head">
       <h2>Frame source</h2>
@@ -72,6 +77,7 @@ export function mountFramePanel(root, { pipeline, debug = false }) {
   let share = null;
   let methodLabel = "—";
   let logItems = [];
+  const overlays = new Set();
 
   const replay = createReplaySource({
     onImage: (bitmap, meta) => pipeline.submit(bitmap, meta),
@@ -128,6 +134,7 @@ export function mountFramePanel(root, { pipeline, debug = false }) {
     el("empty").hidden = false;
     refreshControls();
     refreshStats(null);
+    onStop?.();
   }
 
   // ---- rendering ----
@@ -165,6 +172,7 @@ export function mountFramePanel(root, { pipeline, debug = false }) {
       preview.height = size.height;
     }
     previewCtx.drawImage(frame.canvas, 0, 0, size.width, size.height);
+    for (const fn of overlays) fn(previewCtx, size.width / frame.width);
     preview.hidden = false;
     el("empty").hidden = true;
   }
@@ -267,6 +275,17 @@ export function mountFramePanel(root, { pipeline, debug = false }) {
 
   if (!canShareScreen()) showError("This browser can't share a window. You can still load screenshots.");
   refreshControls();
+
+  return {
+    addOverlay(fn) {
+      overlays.add(fn);
+      return () => overlays.delete(fn);
+    },
+    /** Redraw the preview and overlays from the latest frame (the frame canvas still holds it). */
+    redraw() {
+      if (pipeline.last && mode !== "off") drawPreview(pipeline.last);
+    },
+  };
 }
 
 function pct(fraction) {

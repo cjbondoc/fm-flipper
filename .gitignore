@@ -25,3 +25,6 @@ dist-ssr
 
 # Local Claude Code settings
 .claude/
+
+# Raw screenshots stay on this computer (see fixtures/README.md)
+fixtures/raw/
